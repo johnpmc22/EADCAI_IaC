@@ -2,7 +2,7 @@ variable "client_id" {}
 variable "client_secret" {}
 
 variable "agent_count" {
-    default = 3
+    default = 1
 }
 
 variable "ssh_public_key" {
@@ -10,15 +10,15 @@ variable "ssh_public_key" {
 }
 
 variable "dns_prefix" {
-    default = "k8stest"
+    default = "eadca1"
 }
 
 variable cluster_name {
-    default = "k8stest"
+    default = "eadca1"
 }
 
 variable resource_group_name {
-    default = "azure-k8stest"
+    default = "azure-eadca1"
 }
 
 variable location {
@@ -26,7 +26,7 @@ variable location {
 }
 
 variable log_analytics_workspace_name {
-    default = "ejohmciLogAnalyticsWorkspaceName"
+    default = "eadca1LogAnalyticsWorkspaceName"
 }
 
 # refer https://azure.microsoft.com/global-infrastructure/services/?products=monitor for log analytics available regions
