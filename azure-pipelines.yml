@@ -1,0 +1,89 @@
+pool:
+  name: Hosted Ubuntu 1604
+#Your build pipeline references an undefined variable named ‘az group show --name $(resourceGroupStorage’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group delete -n $(resourceGroupStorage’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group create -l $(location’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group create -l $(location’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group create -l $(location’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group show --name $(kubernetesResourceGroup’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group show --name $(kubernetesResourceGroup’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘az group delete -n $(kubernetesResourceGroup’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+variables:
+  resourceGroupStorage: 'azurerm_resource_group'
+  kubernetesResourceGroup: 'azure-eadca1'
+
+steps:
+- task: AzureCLI@1
+  displayName: 'Pre Auto Deploy IaC Preparations '
+  inputs:
+    azureSubscription: 'Free Trial (116880b6-281d-4a55-8e99-82cce51e6f41)'
+    scriptLocation: inlineScript
+    inlineScript: |
+     #!/bin/bash
+     
+     if [[ $(az group show --name $(resourceGroupStorage)) ]]; then
+         echo "Resource group $(resourceGroupStorage) does exist therefore deleting and recreating"
+         $(az group delete -n $(resourceGroupStorage) --yes)
+         $(az group create -l $(location) -n $(resourceGroupStorage))
+     else
+        echo "Resource group $(resourceGroupStorage) does not exist therefore creating"
+        $(az group create -l $(location) -n $(resourceGroupStorage))
+     fi
+     
+     if [[ $(az group show --name $(kubernetesResourceGroup)) ]]; then
+         echo "Resource group $(kubernetesResourceGroup) exists therefore deleting"
+         $(az group delete -n $(kubernetesResourceGroup) --yes)
+     else
+         echo "Resource group $(kubernetesResourceGroup) does not exist continue"
+     fi
+     
+     
+     
+
+- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+  displayName: 'Use Terraform 0.11.13'
+  inputs:
+    terraformVersion: 0.11.13
+
+- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+  displayName: 'terraform init'
+  inputs:
+    command: init
+    workingDirectory: 'terraform-aks-k8s'
+    backendType: azurerm
+    backendServiceArm: 'Free Trial (116880b6-281d-4a55-8e99-82cce51e6f41)'
+    ensureBackend: true
+    backendAzureRmResourceGroupName: '$(resourceGroupStorage)'
+    backendAzureRmResourceGroupLocation: '$(location)'
+    backendAzureRmStorageAccountName: '$(storageAccountName)'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: '$(accessKey)'
+
+- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+  displayName: 'terraform plan'
+  inputs:
+    command: plan
+    workingDirectory: 'terraform-aks-k8s'
+    environmentServiceName: 'Free Trial (116880b6-281d-4a55-8e99-82cce51e6f41)'
+    secureVarsFile: '4f114921-cbae-41d6-a9a2-3966e7c2059c'
+    commandOptions: '-out out.plan'
+
+- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+  displayName: 'terraform apply'
+  inputs:
+    command: apply
+    workingDirectory: 'terraform-aks-k8s'
+    environmentServiceName: 'Free Trial (116880b6-281d-4a55-8e99-82cce51e6f41)'
+    commandOptions: out.plan
+
+- task: CopyFiles@2
+  displayName: 'Copy Terraform Files to Artifacts'
+  inputs:
+    SourceFolder: 'terraform-aks-k8s'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/Terraform'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: TERRAFORM_APP'
+  inputs:
+    ArtifactName: ' TERRAFORM_APP'
+
