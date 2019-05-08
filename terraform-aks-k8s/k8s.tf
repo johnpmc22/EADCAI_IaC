@@ -34,7 +34,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
         count           = "${var.agent_count}"
         vm_size         = "Standard_DS1_v2"
         os_type         = "Linux"
-        os_disk_size_gb = 30
+        os_disk_size_gb = 1
     }
 
     service_principal {
