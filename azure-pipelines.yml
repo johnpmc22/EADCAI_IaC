@@ -86,4 +86,3 @@ steps:
   displayName: 'Publish Artifact: TERRAFORM_APP'
   inputs:
     ArtifactName: ' TERRAFORM_APP'
-
